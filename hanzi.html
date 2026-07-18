@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📖 汉字大冒险 · Hanzi Quest</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+  body {
+    font-family:"PingFang SC","Microsoft YaHei","Segoe UI",Arial,sans-serif;
+    background:linear-gradient(160deg,#1a0f30 0%,#2a1a51 50%,#160d3e 100%);
+    color:#fff; min-height:100vh; display:flex; align-items:flex-start; justify-content:center;
+  }
+  .screen { width:100%; max-width:600px; padding:14px; }
+  .hidden { display:none !important; }
+  h1 { font-size:32px; text-align:center; margin-bottom:6px; text-shadow:0 4px 0 rgba(0,0,0,.4); }
+  .sub { font-size:15px; opacity:.85; margin-bottom:14px; text-align:center; line-height:1.6; }
+
+  .bigbtn {
+    font-size:22px; font-weight:900; padding:14px 36px; border-radius:18px; border:none; cursor:pointer;
+    color:#1a1a2e; background:linear-gradient(180deg,#ffe066,#ffb32c);
+    box-shadow:0 6px 0 #b3720a; transition:transform .06s; display:block; margin:10px auto 0;
+  }
+  .bigbtn:active { transform:translateY(4px); box-shadow:0 2px 0 #b3720a; }
+  .bigbtn:disabled { filter:grayscale(1); opacity:.5; }
+  .smallbtn {
+    font-size:15px; font-weight:700; padding:9px 20px; border-radius:12px; border:none; cursor:pointer;
+    color:#fff; background:rgba(255,255,255,.15); margin:6px;
+  }
+
+  /* player cards */
+  #playerCards { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:8px; }
+  .pcard {
+    width:31%; min-width:150px; border-radius:18px; padding:10px 8px; text-align:center;
+    border:3px solid; background:rgba(255,255,255,.05);
+  }
+  .pcard .pname { font-size:17px; font-weight:900; margin:2px 0 4px; letter-spacing:1px; }
+  .pstats { font-size:12px; line-height:1.7; opacity:.92; }
+  .playAs {
+    margin-top:6px; font-size:14px; font-weight:800; padding:8px 0; width:100%; border-radius:10px;
+    border:none; cursor:pointer; color:#fff;
+  }
+  .subBtn {
+    margin-top:5px; font-size:12.5px; font-weight:800; padding:6px 0; width:100%; border-radius:10px;
+    border:none; cursor:pointer; color:#fff; background:rgba(255,255,255,.16);
+  }
+  .bossB { background:linear-gradient(180deg,#8a2be2,#4b0d8f) !important; box-shadow:0 3px 0 #2d0857; }
+  .subBtn:disabled { filter:grayscale(1); opacity:.5; }
+
+  /* test */
+  #testChar {
+    font-size:120px; font-weight:900; text-align:center; margin:20px 0;
+    text-shadow:0 6px 0 rgba(0,0,0,.4);
+  }
+  .tbtns { display:flex; gap:14px; justify-content:center; }
+  .tbtn { font-size:22px; font-weight:900; padding:16px 30px; border-radius:16px; border:none; cursor:pointer; color:#fff; }
+  .tyes { background:linear-gradient(180deg,#3ce07b,#1ca551); box-shadow:0 5px 0 #0d6b32; }
+  .tno  { background:linear-gradient(180deg,#ff5a5a,#c92424); box-shadow:0 5px 0 #7f1616; }
+  .tbtn:active { transform:translateY(4px); }
+  #testProg { text-align:center; font-size:15px; opacity:.8; margin-bottom:6px; }
+
+  /* story */
+  .storyBox {
+    background:rgba(255,255,255,.07); border:3px solid #7c5aff; border-radius:20px;
+    padding:18px 16px; font-size:26px; line-height:2.2; letter-spacing:2px;
+    box-shadow:0 0 30px rgba(124,90,255,.3);
+  }
+  .storyBox .ch { cursor:pointer; border-radius:6px; padding:0 1px; }
+  .storyBox .ch:active { background:rgba(255,213,74,.3); }
+  ruby.newc { color:#ff5a6a; font-weight:900; }
+  ruby.newc rt { font-size:13px; color:#ffd54a; font-weight:700; }
+  .moral { font-size:16px; color:#7cf2a4; text-align:center; margin-top:12px; font-weight:700; }
+  .idiomTitle { text-align:center; font-size:30px; font-weight:900; color:#ffd54a; margin-bottom:4px; letter-spacing:6px; }
+  .levelTag { text-align:center; font-size:14px; opacity:.75; margin-bottom:10px; }
+  #newList { text-align:center; margin-top:12px; font-size:15px; opacity:.9; }
+
+  /* quiz */
+  .qBox {
+    text-align:center; background:rgba(255,255,255,.06); border:3px solid #4a5aff;
+    border-radius:22px; padding:18px 10px; margin-bottom:14px;
+    box-shadow:0 0 30px rgba(74,90,255,.35);
+  }
+  .qBig { font-size:88px; font-weight:900; }
+  .qPin { font-size:44px; font-weight:900; color:#ffd54a; }
+  .qAsk { font-size:15px; opacity:.75; margin-bottom:4px; }
+  .answers { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .ans {
+    font-size:30px; font-weight:800; padding:16px 0; border-radius:18px; border:none; cursor:pointer;
+    color:#fff; background:linear-gradient(180deg,#3a7bff,#2450c9);
+    box-shadow:0 6px 0 #16327f; transition:transform .06s;
+  }
+  .ans:active { transform:translateY(4px); }
+  .ans.correct { background:linear-gradient(180deg,#3ce07b,#1ca551); box-shadow:0 6px 0 #0d6b32; }
+  .ans.wrong { background:linear-gradient(180deg,#ff5a5a,#c92424); box-shadow:0 6px 0 #7f1616; }
+  #quizProg { text-align:center; font-size:15px; font-weight:800; opacity:.8; margin-bottom:10px; }
+
+  /* bank */
+  #bankGrid { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px; max-height:55vh; overflow-y:auto; }
+  .bankCh {
+    width:52px; height:52px; display:flex; align-items:center; justify-content:center;
+    font-size:26px; font-weight:800; background:rgba(255,255,255,.08);
+    border:2px solid rgba(255,255,255,.2); border-radius:12px; cursor:pointer;
+  }
+  .rankBarWrap { height:16px; background:rgba(255,255,255,.12); border-radius:9px; overflow:hidden; margin:8px 0; border:2px solid rgba(255,255,255,.15); }
+  .rankBar { height:100%; background:linear-gradient(90deg,#7cf2a4,#ffd54a); border-radius:7px; transition:width .5s; }
+
+  /* boss */
+  #bossTop { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  #bossPic { font-size:80px; animation:bossFloat 2.4s ease-in-out infinite; }
+  @keyframes bossFloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+  #bossInfo { flex:1; }
+  #bossName { font-size:20px; font-weight:900; color:#c86aff; text-shadow:0 0 12px rgba(138,43,226,.8); }
+  .hpWrap { height:16px; background:rgba(255,255,255,.12); border-radius:8px; overflow:hidden; margin-top:6px; border:2px solid rgba(138,43,226,.5); }
+  .hpBar { height:100%; border-radius:8px; transition:width .4s; background:linear-gradient(90deg,#c86aff,#8a2be2); }
+  #bossHPn { font-size:13px; font-weight:800; margin-top:3px; }
+  #bossPlayerRow { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding:6px 10px; background:rgba(255,255,255,.06); border-radius:12px; }
+  .timerWrap { height:16px; background:rgba(255,255,255,.1); border-radius:9px; overflow:hidden; margin-bottom:14px; border:2px solid rgba(255,255,255,.15); }
+  .timerBar { height:100%; width:100%; background:linear-gradient(90deg,#38e07b,#ffd54a,#ff5a5a); border-radius:7px; transform-origin:left; }
+
+  .overlay {
+    position:fixed; inset:0; background:rgba(10,6,30,.94); display:flex;
+    align-items:center; justify-content:center; flex-direction:column; z-index:50; text-align:center; padding:20px;
+    overflow-y:auto;
+  }
+  .card3d {
+    background:linear-gradient(160deg,#332158,#1a1040); border:3px solid #ffd54a; border-radius:24px;
+    padding:24px 34px; box-shadow:0 0 60px rgba(255,213,74,.4);
+    animation:popIn .4s cubic-bezier(.2,1.6,.4,1);
+  }
+  @keyframes popIn { 0%{transform:scale(.3);} 100%{transform:scale(1);} }
+
+  #feedback {
+    position:fixed; top:12%; left:0; right:0; text-align:center; font-size:38px; font-weight:900;
+    pointer-events:none; z-index:70; text-shadow:0 4px 0 rgba(0,0,0,.4); opacity:0;
+  }
+  #feedback.show { animation:fb .8s ease-out; }
+  @keyframes fb { 0%{opacity:0; transform:scale(.5);} 30%{opacity:1; transform:scale(1.15);} 100%{opacity:0; transform:scale(1) translateY(-40px);} }
+
+  #pinBubble {
+    position:fixed; top:14%; left:50%; transform:translateX(-50%); z-index:75;
+    background:#ffd54a; color:#1a1a2e; font-size:30px; font-weight:900;
+    padding:10px 26px; border-radius:16px; box-shadow:0 6px 20px rgba(0,0,0,.5);
+    pointer-events:none; opacity:0; transition:opacity .15s;
+  }
+  #pinBubble.show { opacity:1; }
+
+  .shake { animation:shakeAnim .5s; }
+  @keyframes shakeAnim {
+    0%,100%{transform:translate(0,0);} 20%{transform:translate(-12px,6px);}
+    40%{transform:translate(10px,-8px);} 60%{transform:translate(-8px,-4px);} 80%{transform:translate(8px,6px);}
+  }
+  .flyThing { position:fixed; font-size:60px; z-index:70; pointer-events:none; top:24%; animation:fly .5s linear forwards; }
+  @keyframes fly { 0%{opacity:1;} 100%{opacity:1; transform:translateX(var(--dx)) rotate(720deg);} }
+  .dmgPop { position:fixed; font-size:44px; font-weight:900; z-index:70; pointer-events:none; animation:dmgAnim .9s ease-out forwards; text-shadow:0 3px 0 rgba(0,0,0,.5); }
+  @keyframes dmgAnim { 0%{opacity:0; transform:scale(.4);} 25%{opacity:1; transform:scale(1.4);} 100%{opacity:0; transform:scale(1) translateY(-70px);} }
+  #confetti span { position:fixed; top:-5vh; font-size:26px; z-index:65; pointer-events:none; animation:fall linear forwards; }
+  @keyframes fall { 100% { transform:translateY(115vh) rotate(600deg); } }
+</style>
+</head>
+<body>
+
+<!-- ============ MENU ============ -->
+<div class="screen" id="menuScreen">
+  <h1>📖 汉字大冒险 📖</h1>
+  <p class="sub">先测一测认识多少字 → 读成语故事学生字 →<br>每100字进阶，挑战大BOSS！🐲<br><b>每个小朋友在自己的iPad上选自己的名字</b></p>
+  <div id="playerCards"></div>
+</div>
+
+<!-- ============ TEST ============ -->
+<div class="screen hidden" id="testScreen">
+  <h1>🔍 识字小测试</h1>
+  <p class="sub">请大声读出这个字。<br>读对了请家长按 ✓，不认识按 ✗</p>
+  <div id="testProg">1 / 80</div>
+  <div id="testChar">字</div>
+  <div class="tbtns">
+    <button class="tbtn tyes" onclick="testAnswer(true)">✓ 认识</button>
+    <button class="tbtn tno" onclick="testAnswer(false)">✗ 不认识</button>
+  </div>
+  <button class="smallbtn" onclick="endTest()" style="display:block;margin:22px auto 0;">提前结束测试</button>
+</div>
+
+<!-- ============ STORY ============ -->
+<div class="screen hidden" id="storyScreen">
+  <div class="levelTag" id="levelTag">第 1 关</div>
+  <div class="idiomTitle" id="idiomTitle">守株待兔</div>
+  <div class="storyBox" id="storyText"></div>
+  <div class="moral" id="storyMoral"></div>
+  <div id="newList"></div>
+  <p class="sub" style="margin-top:8px;font-size:13px;">💡 红色是新字（带拼音）· 点任何字可以看拼音</p>
+  <button class="bigbtn" onclick="startQuiz()">⚔️ 开始闯关</button>
+  <button class="smallbtn" onclick="goMenu()" style="display:block;margin:8px auto;">🏠 返回</button>
+</div>
+
+<!-- ============ QUIZ ============ -->
+<div class="screen hidden" id="quizScreen">
+  <div id="quizProg">第 1 题 / 8</div>
+  <div class="qBox">
+    <div class="qAsk" id="qAsk">这个字怎么读？</div>
+    <div id="qMain" class="qBig">字</div>
+  </div>
+  <div class="answers" id="quizAnswers"></div>
+</div>
+
+<!-- ============ BANK ============ -->
+<div class="screen hidden" id="bankScreen">
+  <h1>📚 <span id="bankOwner"></span>的识字库</h1>
+  <p class="sub">已认识 <b id="bankCount" style="color:#ffd54a;font-size:22px;">0</b> 个字 · 段位：<b id="bankRank" style="color:#7cf2a4;"></b></p>
+  <div class="rankBarWrap"><div class="rankBar" id="rankBar" style="width:0%"></div></div>
+  <div class="sub" id="rankNext" style="margin-bottom:0;"></div>
+  <div id="bankGrid"></div>
+  <button class="smallbtn" onclick="goMenu()" style="display:block;margin:14px auto;">🏠 返回</button>
+</div>
+
+<!-- ============ BOSS ============ -->
+<div class="screen hidden" id="bossScreen">
+  <div id="bossTop">
+    <div id="bossPic">👹</div>
+    <div id="bossInfo">
+      <div id="bossName">小字妖</div>
+      <div class="hpWrap"><div class="hpBar" id="bossHP" style="width:100%"></div></div>
+      <div id="bossHPn">100 / 100</div>
+    </div>
+  </div>
+  <div id="bossPlayerRow">
+    <span id="bossPlayerName" style="font-weight:900;">玩家 ⚔️ 攻击力 10</span>
+    <span id="bossHearts" style="font-size:20px;">❤️❤️❤️</span>
+  </div>
+  <div class="timerWrap"><div class="timerBar" id="bossTimer"></div></div>
+  <div class="qBox">
+    <div class="qAsk">这个字怎么读？读对就攻击！</div>
+    <div id="bossQ" class="qBig">字</div>
+  </div>
+  <div class="answers" id="bossAnswers"></div>
+</div>
+
+<div id="feedback"></div>
+<div id="pinBubble"></div>
+
+<!-- ============ RESULT OVERLAYS ============ -->
+<div class="overlay hidden" id="testDoneScreen">
+  <div class="card3d">
+    <div style="font-size:20px;font-weight:800;color:#7cf2a4;">🎉 测试完成！</div>
+    <div style="font-size:52px;font-weight:900;color:#ffd54a;margin:10px 0;"><span id="testKnown">0</span> 个字</div>
+    <div style="font-size:15px;opacity:.85;">已经放进你的识字库！<br>现在去读故事、学新字吧！</div>
+  </div>
+  <button class="bigbtn" onclick="afterTest()">📖 开始第一个故事</button>
+</div>
+
+<div class="overlay hidden" id="passScreen">
+  <div id="confetti"></div>
+  <div class="card3d">
+    <div style="font-size:20px;font-weight:800;color:#7cf2a4;">🎉 通关成功！获得成语卡片 🃏</div>
+    <div style="font-size:40px;font-weight:900;color:#ffd54a;margin:8px 0;letter-spacing:5px;" id="passIdiom"></div>
+    <div id="passStars" style="font-size:30px;margin-bottom:6px;"></div>
+    <div style="font-size:16px;" id="passNew"></div>
+    <div style="font-size:14px;opacity:.8;margin-top:8px;" id="passBank"></div>
+  </div>
+  <div id="rankUpMsg" class="hidden" style="margin-top:14px;font-size:19px;font-weight:900;color:#ffd54a;background:rgba(255,213,74,.15);border-radius:14px;padding:10px 20px;"></div>
+  <button class="bigbtn" onclick="goMenu()">🏠 太棒了！</button>
+</div>
+
+<div class="overlay hidden" id="bossResultScreen">
+  <div id="bossResultEmoji" style="font-size:76px;"></div>
+  <h1 id="bossResultTitle" style="font-size:36px;"></h1>
+  <p class="sub" id="bossResultMsg"></p>
+  <button class="bigbtn" id="bossRetryBtn">⚔️ 再战</button>
+  <button class="smallbtn" onclick="goMenu()">🏠 返回</button>
+</div>
+
+<script>
+const GAME_DATA = {"STORIES": [{"id": "guitusaipao", "idiom": "龟兔赛跑", "new": "龟兔跑赢", "text": "小兔子跑得快，小乌龟走得慢。它们比赛跑步。兔子睡了一大觉，乌龟一直走，最后乌龟赢了。", "moral": "坚持到底，就能成功！"}, {"id": "shouzhudaitu", "idiom": "守株待兔", "new": "树等撞死", "text": "农夫在田里干活，一只兔子撞到树上死了。农夫天天坐在树下等兔子，再也没有等到。", "moral": "不能只想不劳而获。"}, {"id": "bamiaozhuzhang", "idiom": "拔苗助长", "new": "苗拔急枯", "text": "农夫想让禾苗长得快，心里很急。他把苗一棵一棵拔高。第二天，苗全都枯死了。", "moral": "做事不能太心急。"}, {"id": "jingdizhiwa", "idiom": "井底之蛙", "new": "井蛙海跳", "text": "青蛙住在井底，它说天就像井口一样小。小鸟告诉它外面有大海。青蛙跳出井口，看到了大大的天。", "moral": "要多看看外面的世界。"}, {"id": "wangyangbulao", "idiom": "亡羊补牢", "new": "羊狼洞修", "text": "羊圈破了一个洞，狼叼走了一只羊。他不肯修。又丢了一只羊，他马上把洞修好，羊再也没有丢。", "moral": "知错就改，还不算晚。"}, {"id": "huashetianzu", "idiom": "画蛇添足", "new": "蛇画酒脚", "text": "几个人比赛画蛇，最快的人可以喝酒。一个人先画完了，又给蛇画上脚。别人说：蛇没有脚！酒被别人喝了。", "moral": "多此一举，反而坏事。"}, {"id": "hujiahuwei", "idiom": "狐假虎威", "new": "狐虎怕王", "text": "老虎抓到一只狐狸。狐狸说：我是天上派来的大王，你跟我走。动物们看见老虎都跑了。老虎以为大家怕狐狸。", "moral": "不要借别人的力量吓人。"}, {"id": "kezhouqiujian", "idiom": "刻舟求剑", "new": "舟剑刻掉", "text": "一个人坐舟过江，他的剑掉进水里。他在舟上刻了一个记号。到了岸边才去找剑，当然找不到。", "moral": "情况变了，办法也要变。"}, {"id": "yanerdaoling", "idiom": "掩耳盗铃", "new": "铃偷耳响", "text": "一个人想偷大铃。他怕铃响，就把自己的耳朵捂住。他一碰铃，铃就响了，大家都听见了。", "moral": "骗自己是没有用的。"}, {"id": "yugongyishan", "idiom": "愚公移山", "new": "山移挖神", "text": "愚公家门前有两座大山，出门很不方便。他带着家人天天挖山。他的决心感动了天神，天神把山移走了。", "moral": "有决心，什么都能做到。"}], "TEST_TIERS": ["一二三十人口手大小上下天日月水火山木田土", "我你他好妈爸家学生中国爱吃喝看见走来去坐", "说话朋友老师花草鸟鱼风雨雪云白红黄蓝色车", "跑跳唱歌睡觉早晚快慢高兴谢请电脑书写字读"], "PY": {"一": "yī", "三": "sān", "上": "shàng", "下": "xià", "不": "bù", "世": "shì", "丢": "diū", "两": "liǎng", "个": "gè", "中": "zhōng", "为": "wèi", "举": "jǔ", "么": "me", "之": "zhī", "乌": "wū", "也": "yě", "书": "shū", "了": "le", "事": "shì", "二": "èr", "云": "yún", "井": "jǐng", "亡": "wáng", "人": "rén", "什": "shén", "他": "tā", "以": "yǐ", "们": "men", "住": "zhù", "你": "nǐ", "便": "biàn", "修": "xiū", "借": "jiè", "假": "jiǎ", "做": "zuò", "偷": "tōu", "像": "xiàng", "先": "xiān", "兔": "tù", "全": "quán", "公": "gōng", "兴": "xīng", "再": "zài", "写": "xiě", "农": "nóng", "决": "jué", "况": "kuàng", "几": "jǐ", "出": "chū", "别": "bié", "到": "dào", "刻": "kè", "前": "qián", "剑": "jiàn", "力": "lì", "办": "bàn", "功": "gōng", "动": "dòng", "助": "zhù", "劳": "láo", "十": "shí", "去": "qù", "又": "yòu", "友": "yǒu", "反": "fǎn", "变": "biàn", "口": "kǒu", "只": "zhī", "可": "kě", "号": "hào", "叼": "diāo", "吃": "chī", "后": "hòu", "吓": "xià", "听": "tīng", "告": "gào", "响": "xiǎng", "唱": "chàng", "喝": "hē", "国": "guó", "圈": "quān", "土": "tǔ", "在": "zài", "坏": "huài", "坐": "zuò", "坚": "jiān", "外": "wài", "多": "duō", "大": "dà", "天": "tiān", "太": "tài", "夫": "fū", "好": "hǎo", "妈": "mā", "威": "wēi", "子": "zi", "字": "zì", "学": "xué", "它": "tā", "守": "shǒu", "完": "wán", "家": "jiā", "小": "xiǎo", "就": "jiù", "山": "shān", "岸": "àn", "己": "jǐ", "师": "shī", "带": "dài", "干": "gàn", "底": "dǐ", "座": "zuò", "当": "dāng", "待": "dài", "很": "hěn", "得": "de", "心": "xīn", "快": "kuài", "怕": "pà", "急": "jí", "情": "qíng", "想": "xiǎng", "愚": "yú", "感": "gǎn", "慢": "màn", "成": "chéng", "我": "wǒ", "手": "shǒu", "才": "cái", "找": "zhǎo", "把": "bǎ", "抓": "zhuā", "拔": "bá", "持": "chí", "挖": "wā", "捂": "wǔ", "掉": "diào", "掩": "yǎn", "撞": "zhuàng", "改": "gǎi", "方": "fāng", "日": "rì", "早": "zǎo", "是": "shì", "晚": "wǎn", "最": "zuì", "月": "yuè", "有": "yǒu", "朋": "péng", "木": "mù", "朵": "duǒ", "来": "lái", "枯": "kū", "树": "shù", "株": "zhū", "样": "yàng", "棵": "kē", "歌": "gē", "此": "cǐ", "步": "bù", "死": "sǐ", "比": "bǐ", "水": "shuǐ", "求": "qiú", "江": "jiāng", "没": "méi", "法": "fǎ", "洞": "dòng", "活": "huó", "派": "pài", "海": "hǎi", "添": "tiān", "火": "huǒ", "然": "rán", "爱": "ài", "爸": "bà", "牢": "láo", "物": "wù", "狐": "hú", "狸": "lí", "狼": "láng", "王": "wáng", "生": "shēng", "用": "yòng", "田": "tián", "电": "diàn", "画": "huà", "界": "jiè", "白": "bái", "的": "de", "盗": "dào", "直": "zhí", "看": "kàn", "着": "zhe", "睡": "shuì", "知": "zhī", "破": "pò", "碰": "pèng", "神": "shén", "禾": "hé", "移": "yí", "第": "dì", "等": "děng", "算": "suàn", "红": "hóng", "给": "gěi", "羊": "yáng", "老": "lǎo", "而": "ér", "耳": "ěr", "肯": "kěn", "能": "néng", "脑": "nǎo", "脚": "jiǎo", "自": "zì", "舟": "zhōu", "色": "sè", "花": "huā", "苗": "miáo", "草": "cǎo", "获": "huò", "蓝": "lán", "虎": "hǔ", "蛇": "shé", "蛙": "wā", "补": "bǔ", "被": "bèi", "要": "yào", "见": "jiàn", "觉": "jiào", "让": "ràng", "记": "jì", "诉": "sù", "话": "huà", "说": "shuō", "请": "qǐng", "读": "dú", "谢": "xiè", "赛": "sài", "赢": "yíng", "走": "zǒu", "足": "zú", "跑": "pǎo", "跟": "gēn", "跳": "tiào", "车": "chē", "边": "biān", "过": "guò", "还": "hái", "进": "jìn", "都": "dōu", "酒": "jiǔ", "里": "lǐ", "量": "liàng", "铃": "líng", "错": "cuò", "长": "zhǎng", "门": "mén", "雨": "yǔ", "雪": "xuě", "青": "qīng", "面": "miàn", "风": "fēng", "马": "mǎ", "骗": "piàn", "高": "gāo", "鱼": "yú", "鸟": "niǎo", "黄": "huáng", "龟": "guī"}};
+
+/* ================= PLAYERS ================= */
+const PLAYERS = [
+  {key:"bigw",   name:"BIG W",  color:"#ff8a3c"},
+  {key:"bellba", name:"BELLBA", color:"#ff5ad0"},
+  {key:"florba", name:"FLORBA", color:"#3ce07b"},
+  {key:"luba",   name:"LUBA",   color:"#6aa2ff"},
+  {key:"carlba", name:"CARLBA", color:"#ff5a5a"},
+  {key:"guoren", name:"GUOREN", color:"#c86aff"},
+];
+const RANKS = ["童生","秀才 🥉","举人 🥈","进士 🥇","状元 👑"];
+const BOSSES = [
+  {name:"小字妖",   pic:"👹", hp:80,  time:7000},
+  {name:"词语魔王", pic:"🧟", hp:150, time:6000},
+  {name:"成语大魔", pic:"🐲", hp:220, time:5000},
+  {name:"汉字神龙", pic:"🐉", hp:300, time:4200},
+];
+
+const {STORIES, TEST_TIERS, PY} = GAME_DATA;
+const $ = id => document.getElementById(id);
+const py = c => PY[c] || "?";
+
+/* ================= PROFILES ================= */
+function loadP(key){
+  let d = null;
+  try{ d = JSON.parse(localStorage.getItem("hz_"+key)); }catch(e){}
+  d = d || {};
+  return { key, bank: Array.isArray(d.bank)?d.bank:[], storyIdx: d.storyIdx||0,
+           cards: Array.isArray(d.cards)?d.cards:[], bossWins: d.bossWins||0, tested: !!d.tested };
+}
+function saveP(p){ try{ localStorage.setItem("hz_"+p.key, JSON.stringify(p)); }catch(e){} }
+const P = {};
+PLAYERS.forEach(pl => P[pl.key] = loadP(pl.key));
+const rankOf = p => Math.min(RANKS.length-1, Math.floor(p.bank.length/100));
+const nameOf = key => PLAYERS.find(x=>x.key===key).name;
+const colorOf = key => PLAYERS.find(x=>x.key===key).color;
+
+/* ================= SOUND ================= */
+let AC;
+function beep(freq, dur, type="square", vol=.15){
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g); g.connect(AC.destination);
+    o.start(); g.gain.exponentialRampToValueAtTime(.001, AC.currentTime+dur);
+    o.stop(AC.currentTime+dur);
+  }catch(e){}
+}
+const sndRight = ()=>{ beep(660,.12); setTimeout(()=>beep(880,.15),100); };
+const sndWrong = ()=>{ beep(160,.4,"sawtooth",.2); };
+const sndTick  = ()=>{ beep(1200,.05,"sine",.06); };
+const sndHit   = ()=>{ beep(220,.15,"sawtooth",.25); setTimeout(()=>beep(110,.2,"sawtooth",.2),80); };
+const sndFanfare=()=>{ [523,659,784,1047,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,.22,"triangle",.22), i*160)); };
+const sndRoar  = ()=>{ beep(90,.5,"sawtooth",.3); setTimeout(()=>beep(70,.6,"sawtooth",.3),200); };
+
+/* ================= SHARED UI ================= */
+const ALL_SCREENS = ["menuScreen","testScreen","storyScreen","quizScreen","bankScreen","bossScreen"];
+const ALL_OVERLAYS = ["testDoneScreen","passScreen","bossResultScreen"];
+function showScreen(id){
+  ALL_SCREENS.forEach(s=>$(s).classList.toggle("hidden", s!==id));
+  ALL_OVERLAYS.forEach(s=>$(s).classList.add("hidden"));
+  window.scrollTo(0,0);
+}
+function showFeedback(txt, color){
+  const f = $("feedback");
+  f.textContent = txt; f.style.color = color;
+  f.classList.remove("show"); void f.offsetWidth; f.classList.add("show");
+}
+let bubbleTimer;
+function showPin(ch){
+  const b = $("pinBubble");
+  b.textContent = ch + "  " + py(ch);
+  b.classList.add("show");
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(()=>b.classList.remove("show"), 1600);
+}
+function throwConfetti(elId){
+  const c = $(elId);
+  c.innerHTML = "";
+  const bits = ["🎉","⭐","🃏","🎊","✨","📖"];
+  for(let i=0;i<28;i++){
+    const s = document.createElement("span");
+    s.textContent = bits[Math.floor(Math.random()*bits.length)];
+    s.style.left = Math.random()*96 + "vw";
+    s.style.animationDuration = (2 + Math.random()*2.5) + "s";
+    s.style.animationDelay = Math.random()*1.2 + "s";
+    c.appendChild(s);
+  }
+}
+function shuffle(a){ return a.slice().sort(()=>Math.random()-.5); }
+function pinyinChoices(correctCh, n=4){
+  const correct = py(correctCh);
+  const pool = shuffle(Object.values(PY).filter(v=>v!==correct));
+  const opts = new Set([correct]);
+  for(const v of pool){ if(opts.size>=n) break; opts.add(v); }
+  return shuffle([...opts]);
+}
+function charChoices(correctCh, extraPool, n=4){
+  const pool = shuffle(extraPool.filter(c=>c!==correctCh && py(c)!==py(correctCh)));
+  const opts = new Set([correctCh]);
+  for(const c of pool){ if(opts.size>=n) break; opts.add(c); }
+  // fallback: fill from PY keys
+  if(opts.size<n){
+    for(const c of shuffle(Object.keys(PY))){ if(opts.size>=n) break; if(c!==correctCh && py(c)!==py(correctCh)) opts.add(c); }
+  }
+  return shuffle([...opts]);
+}
+
+/* ================= MENU ================= */
+let cur = null; // current player key
+function goMenu(){
+  showScreen("menuScreen");
+  renderMenu();
+}
+function renderMenu(){
+  $("playerCards").innerHTML = PLAYERS.map(pl=>{
+    const p = P[pl.key];
+    const r = rankOf(p);
+    const bossOK = p.bank.length >= 100;
+    const mainLabel = !p.tested ? "🔍 识字测试" : (p.storyIdx < STORIES.length ? "▶ 第"+(p.storyIdx+1)+"关" : "🔄 复习挑战");
+    return `<div class="pcard" style="border-color:${pl.color};box-shadow:0 0 16px ${pl.color}55;">
+      <div class="pname" style="color:${pl.color};">${pl.name}</div>
+      <div class="pstats">🈶 识字 <b>${p.bank.length}</b> · 🎖️ ${RANKS[r]}<br>🃏 卡片 <b>${p.cards.length}</b> · 🐲 <b>${p.bossWins}</b></div>
+      <button class="playAs" style="background:${pl.color};box-shadow:0 3px 0 rgba(0,0,0,.4);" onclick="startMain('${pl.key}')">${mainLabel}</button>
+      <button class="subBtn" onclick="openBank('${pl.key}')">📚 识字库</button>
+      <button class="subBtn bossB" ${bossOK?"":"disabled"} onclick="startBoss('${pl.key}')">${bossOK?"🐲 挑战BOSS":"🔒 BOSS·满100字解锁"}</button>
+    </div>`;
+  }).join("");
+}
+function startMain(key){
+  cur = key;
+  const p = P[key];
+  if(!p.tested) startTest();
+  else if(p.storyIdx < STORIES.length) openStory(p.storyIdx);
+  else startReview();
+}
+
+/* ================= PLACEMENT TEST ================= */
+let test; // {chars, idx, known, tierMiss}
+function startTest(){
+  const chars = TEST_TIERS.join("").split("");
+  test = { chars, idx:0, known:[], missInTier:0, tier:0 };
+  showScreen("testScreen");
+  paintTest();
+}
+function paintTest(){
+  $("testProg").textContent = (test.idx+1) + " / " + test.chars.length;
+  $("testChar").textContent = test.chars[test.idx];
+}
+function testAnswer(knows){
+  const ch = test.chars[test.idx];
+  const tierLen = TEST_TIERS[0].length;
+  const tierNow = Math.floor(test.idx / tierLen);
+  if(tierNow !== test.tier){ test.tier = tierNow; test.missInTier = 0; }
+  if(knows){ test.known.push(ch); sndRight(); }
+  else { test.missInTier++; sndWrong(); }
+  test.idx++;
+  // stop early if struggling in this tier
+  if(test.missInTier >= 8 || test.idx >= test.chars.length){ endTest(); return; }
+  paintTest();
+}
+function endTest(){
+  const p = P[cur];
+  const merged = new Set(p.bank);
+  test.known.forEach(c=>merged.add(c));
+  p.bank = [...merged];
+  p.tested = true;
+  saveP(p);
+  $("testKnown").textContent = test.known.length;
+  $("testDoneScreen").classList.remove("hidden");
+  sndFanfare();
+}
+function afterTest(){
+  $("testDoneScreen").classList.add("hidden");
+  openStory(P[cur].storyIdx);
+}
+
+/* ================= STORY ================= */
+let story = null;
+function openStory(idx){
+  story = STORIES[idx];
+  showScreen("storyScreen");
+  $("levelTag").textContent = "第 " + (idx+1) + " 关 · 成语故事";
+  $("idiomTitle").textContent = story.idiom;
+  const newSet = new Set(story.new.split(""));
+  $("storyText").innerHTML = story.text.split("").map(ch=>{
+    if(newSet.has(ch)) return `<ruby class="newc">${ch}<rt>${py(ch)}</rt></ruby>`;
+    if(PY[ch]) return `<span class="ch" onclick="showPin('${ch}')">${ch}</span>`;
+    return ch;
+  }).join("");
+  $("storyMoral").textContent = "💡 " + story.moral;
+  $("newList").innerHTML = "本关生字：" + story.new.split("").map(c=>
+    `<b style="color:#ff5a6a;font-size:22px;margin:0 4px;">${c}</b><span style="color:#ffd54a;">${py(c)}</span>`
+  ).join(" ");
+}
+
+/* ================= QUIZ ================= */
+let quiz; // {qs, idx, mistakes}
+function startQuiz(){
+  const p = P[cur];
+  const newChars = story.new.split("");
+  const qs = [];
+  newChars.forEach(c=> qs.push({type:"c2p", ch:c}));                    // char -> pinyin
+  newChars.forEach(c=> qs.push({type:"p2c", ch:c}));                    // pinyin -> char
+  quiz = { qs: shuffle(qs), idx:0, mistakes:0 };
+  showScreen("quizScreen");
+  paintQuiz();
+}
+function paintQuiz(){
+  const q = quiz.qs[quiz.idx];
+  $("quizProg").textContent = "第 " + (quiz.idx+1) + " 题 / " + quiz.qs.length;
+  const box = $("quizAnswers");
+  box.innerHTML = "";
+  let choices;
+  if(q.type === "c2p"){
+    $("qAsk").textContent = "这个字怎么读？";
+    $("qMain").className = "qBig";
+    $("qMain").textContent = q.ch;
+    choices = pinyinChoices(q.ch);
+    choices.forEach(v=>{
+      const b = document.createElement("button");
+      b.className = "ans"; b.textContent = v;
+      b.onclick = ()=>quizAnswer(b, v === py(q.ch));
+      box.appendChild(b);
+    });
+  } else {
+    $("qAsk").textContent = "哪个字读 “" + py(q.ch) + "” ？";
+    $("qMain").className = "qPin";
+    $("qMain").textContent = py(q.ch);
+    choices = charChoices(q.ch, P[cur].bank.concat(story.new.split("")));
+    choices.forEach(c=>{
+      const b = document.createElement("button");
+      b.className = "ans"; b.textContent = c;
+      b.onclick = ()=>quizAnswer(b, c === q.ch);
+      box.appendChild(b);
+    });
+  }
+}
+let quizLock = false;
+function quizAnswer(btn, ok){
+  if(quizLock) return;
+  if(ok){
+    quizLock = true;
+    btn.classList.add("correct");
+    sndRight();
+    showFeedback("对啦！✅", "#3ce07b");
+    setTimeout(()=>{
+      quizLock = false;
+      quiz.idx++;
+      if(quiz.idx >= quiz.qs.length) quizDone();
+      else paintQuiz();
+    }, 600);
+  } else {
+    btn.classList.add("wrong");
+    btn.disabled = true;
+    quiz.mistakes++;
+    sndWrong();
+    showFeedback("再想想 🤔", "#ff8a94");
+  }
+}
+function quizDone(){
+  const p = P[cur];
+  const before = p.bank.length;
+  const beforeRank = rankOf(p);
+  if(story.id !== "review"){
+    const merged = new Set(p.bank);
+    story.new.split("").forEach(c=>merged.add(c));
+    p.bank = [...merged];
+    if(!p.cards.includes(story.id)) p.cards.push(story.id);
+    p.storyIdx = Math.max(p.storyIdx, STORIES.indexOf(story)+1);
+    saveP(p);
+  }
+  const stars = quiz.mistakes===0 ? 3 : (quiz.mistakes<=2 ? 2 : 1);
+  $("passIdiom").textContent = "🃏 " + story.idiom;
+  $("passStars").textContent = "⭐".repeat(stars) + "☆".repeat(3-stars);
+  $("passNew").innerHTML = "新学会：" + story.new.split("").map(c=>`<b style="color:#ff5a6a;font-size:24px;margin:0 3px;">${c}</b>`).join("");
+  $("passBank").textContent = "识字库：" + before + " → " + p.bank.length + " 个字";
+  const afterRank = rankOf(p);
+  if(afterRank > beforeRank || (before < 100 && p.bank.length >= 100)){
+    $("rankUpMsg").textContent = "🎖️ 进阶啦！你现在是 " + RANKS[rankOf(p)] + "！🐲 更强的BOSS已解锁！";
+    $("rankUpMsg").classList.remove("hidden");
+  } else {
+    $("rankUpMsg").classList.add("hidden");
+  }
+  throwConfetti("confetti");
+  sndFanfare();
+  $("passScreen").classList.remove("hidden");
+}
+
+/* ================= REVIEW MODE (after all stories) ================= */
+function startReview(){
+  const p = P[cur];
+  const bank = shuffle(p.bank).slice(0, 8);
+  story = {id:"review", idiom:"复习挑战", new: bank.join(""), text:"", moral:""};
+  const qs = bank.map(c=> Math.random()<.5 ? {type:"c2p", ch:c} : {type:"p2c", ch:c});
+  quiz = { qs, idx:0, mistakes:0, review:true };
+  showScreen("quizScreen");
+  paintQuiz();
+}
+
+/* ================= BANK ================= */
+function openBank(key){
+  cur = key;
+  const p = P[key];
+  showScreen("bankScreen");
+  $("bankOwner").textContent = nameOf(key);
+  $("bankCount").textContent = p.bank.length;
+  $("bankRank").textContent = RANKS[rankOf(p)];
+  const r = rankOf(p);
+  const prog = r >= RANKS.length-1 ? 100 : (p.bank.length % 100);
+  $("rankBar").style.width = prog + "%";
+  $("rankNext").textContent = r >= RANKS.length-1 ? "已是最高段位 👑" : "再认 " + (100 - p.bank.length % 100) + " 个字进阶为 " + RANKS[r+1];
+  $("bankGrid").innerHTML = p.bank.map(c=>`<div class="bankCh" onclick="showPin('${c}')">${c}</div>`).join("")
+    || `<div style="opacity:.6;">还没有字，先做识字测试吧！</div>`;
+}
+
+/* ================= BOSS ================= */
+let boss; // {key, cfg, hp, hearts, ans, deadline, raf, locked, warned, dmg}
+function startBoss(key){
+  cur = key;
+  const p = P[key];
+  if(p.bank.length < 100) return;
+  const r = Math.min(BOSSES.length-1, rankOf(p)-1 < 0 ? 0 : rankOf(p)-1);
+  const cfg = BOSSES[r];
+  boss = { key, cfg, hp: cfg.hp, hearts: 3, dmg: 8 + Math.floor(p.bank.length/12) };
+  showScreen("bossScreen");
+  $("bossPic").textContent = cfg.pic;
+  $("bossName").textContent = cfg.name + "（第" + (r+1) + "级）";
+  $("bossPlayerName").textContent = nameOf(key) + " ⚔️ 攻击力 " + boss.dmg;
+  updateBossUI();
+  sndRoar();
+  setTimeout(bossNextQ, 600);
+}
+function updateBossUI(){
+  $("bossHP").style.width = Math.max(0, boss.hp/boss.cfg.hp*100) + "%";
+  $("bossHPn").textContent = Math.max(0,boss.hp) + " / " + boss.cfg.hp;
+  $("bossHearts").textContent = "❤️".repeat(boss.hearts) + "🖤".repeat(3-boss.hearts);
+}
+function bossNextQ(){
+  boss.locked = false; boss.warned = false;
+  const p = P[boss.key];
+  const ch = p.bank[Math.floor(Math.random()*p.bank.length)];
+  boss.ch = ch;
+  $("bossQ").textContent = ch;
+  const box = $("bossAnswers");
+  box.innerHTML = "";
+  pinyinChoices(ch).forEach(v=>{
+    const b = document.createElement("button");
+    b.className = "ans"; b.textContent = v;
+    b.onclick = ()=>bossAnswer(b, v === py(ch));
+    box.appendChild(b);
+  });
+  boss.deadline = performance.now() + boss.cfg.time;
+  cancelAnimationFrame(boss.raf);
+  bossTick();
+}
+function bossTick(){
+  const left = boss.deadline - performance.now();
+  $("bossTimer").style.transform = `scaleX(${Math.max(0,left/boss.cfg.time)})`;
+  if(left < 1200 && !boss.warned){ boss.warned = true; sndTick(); setTimeout(sndTick,300); }
+  if(left <= 0){ if(!boss.locked) bossHit(); return; }
+  boss.raf = requestAnimationFrame(bossTick);
+}
+function flyThing(emoji, fromLeft){
+  const fly = document.createElement("div");
+  fly.className = "flyThing";
+  fly.textContent = emoji;
+  fly.style.left = fromLeft ? "12%" : "auto";
+  fly.style.right = fromLeft ? "auto" : "12%";
+  fly.style.setProperty("--dx", (fromLeft?1:-1)*Math.min(window.innerWidth*.55, 320) + "px");
+  document.body.appendChild(fly);
+  setTimeout(()=>fly.remove(), 550);
+}
+function dmgPop(txt, color, onLeft){
+  const pop = document.createElement("div");
+  pop.className = "dmgPop";
+  pop.textContent = txt;
+  pop.style.color = color;
+  pop.style.top = "20%";
+  pop.style.left = onLeft ? "18%" : "auto";
+  pop.style.right = onLeft ? "auto" : "18%";
+  document.body.appendChild(pop);
+  setTimeout(()=>pop.remove(), 950);
+}
+function bossAnswer(btn, ok){
+  if(boss.locked) return;
+  if(!ok){
+    btn.classList.add("wrong");
+    btn.disabled = true;
+    bossHit();
+    return;
+  }
+  boss.locked = true;
+  cancelAnimationFrame(boss.raf);
+  btn.classList.add("correct");
+  sndRight();
+  flyThing("⚔️", false);
+  setTimeout(()=>{
+    sndHit();
+    boss.hp -= boss.dmg;
+    updateBossUI();
+    dmgPop("-"+boss.dmg, "#c86aff", true);
+    document.body.classList.add("shake");
+    setTimeout(()=>document.body.classList.remove("shake"), 500);
+    if(boss.hp <= 0) setTimeout(bossWin, 700);
+    else setTimeout(bossNextQ, 650);
+  }, 520);
+}
+function bossHit(){
+  boss.locked = true;
+  cancelAnimationFrame(boss.raf);
+  sndRoar();
+  flyThing("🔥", true);
+  setTimeout(()=>{
+    sndWrong();
+    boss.hearts--;
+    updateBossUI();
+    dmgPop("-1 ❤️", "#ff6a7a", false);
+    document.body.classList.add("shake");
+    setTimeout(()=>document.body.classList.remove("shake"), 500);
+    if(boss.hearts <= 0) setTimeout(bossLose, 700);
+    else setTimeout(bossNextQ, 650);
+  }, 520);
+}
+function bossWin(){
+  const p = P[boss.key];
+  p.bossWins++;
+  saveP(p);
+  $("bossResultEmoji").textContent = boss.cfg.pic + "💀";
+  $("bossResultTitle").textContent = "打败了" + boss.cfg.name + "！";
+  $("bossResultTitle").style.color = "#7cf2a4";
+  $("bossResultMsg").innerHTML = "🏆 " + nameOf(boss.key) + " 太厉害了！<br>🐲 战胜BOSS次数：<b>" + p.bossWins + "</b><br>多认字，攻击力会更强！";
+  $("bossRetryBtn").onclick = ()=>startBoss(boss.key);
+  sndFanfare();
+  $("bossResultScreen").classList.remove("hidden");
+}
+function bossLose(){
+  $("bossResultEmoji").textContent = boss.cfg.pic + "🔥";
+  $("bossResultTitle").textContent = "BOSS赢了这一局…";
+  $("bossResultTitle").style.color = "#ff6a7a";
+  $("bossResultMsg").innerHTML = "去识字库复习一下，<br>多认几个字再来挑战！💪";
+  $("bossRetryBtn").onclick = ()=>startBoss(boss.key);
+  sndWrong();
+  $("bossResultScreen").classList.remove("hidden");
+}
+
+renderMenu();
+</script>
+</body>
+</html>
